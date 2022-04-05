@@ -2,8 +2,40 @@
 
 static inline bool toggle = true;
 
+#ifdef SKYRIM_SUPPORT_AE
+void Loki::NoFollowerAttackCollision::InstallMeleeHook() {
+	REL::Relocation<std::uintptr_t> MeleeHook{ REL::ID(38603) }; //+45A
+	// SkyrimSE.exe+64E54A - E8 B10F0000           - call SkyrimSE.exe+64F500
+
+	auto& trmp = SKSE::GetTrampoline();
+	_MeleeFunction = trmp.write_call<5>(MeleeHook.address() + 0x45A, MeleeFunction);
+
+	logger::info("Unk Hook injected");
+}
+
+void Loki::NoFollowerAttackCollision::InstallSweepHook() {
+	REL::Relocation<std::uintptr_t> SweepHook{ REL::ID(38603) }; //+40A
+	// SkyrimSE.exe+64E4FA - E8 01100000           - call SkyrimSE.exe+64F500
+
+	auto& trmp = SKSE::GetTrampoline();
+	_SweepFunction = trmp.write_call<5>(SweepHook.address() + 0x40A, SweepFunction);
+
+	logger::info("Unk Hook 2 injected");
+}
+
+void Loki::NoFollowerAttackCollision::InstallArrowHook() {
+	REL::Relocation<std::uintptr_t> arrowHook{ REL::ID(44218) }; //+90
+	// SkyrimSE.exe+782E60 - E8 9BC6ECFF           - call SkyrimSE.exe+64F500
+
+	auto& trmp = SKSE::GetTrampoline();
+	_ArrowFunction = trmp.write_call<5>(arrowHook.address() + 0x90, ArrowFunction);
+
+	logger::info("Arrow hook injected");
+}
+#else
 void Loki::NoFollowerAttackCollision::InstallMeleeHook() {
 	REL::Relocation<std::uintptr_t> MeleeHook{ REL::ID(37650) }; //+38B
+	// SkyrimSE.exe+64E54A - E8 B10F0000           - call SkyrimSE.exe+64F500
 
 	auto& trmp = SKSE::GetTrampoline();
 	_MeleeFunction = trmp.write_call<5>(MeleeHook.address() + 0x38B, MeleeFunction);
@@ -13,6 +45,7 @@ void Loki::NoFollowerAttackCollision::InstallMeleeHook() {
 
 void Loki::NoFollowerAttackCollision::InstallSweepHook() {
 	REL::Relocation<std::uintptr_t> SweepHook{ REL::ID(37689) }; //+DD
+	// SkyrimSE.exe+64E4FA - E8 01100000           - call SkyrimSE.exe+64F500
 
 	auto& trmp = SKSE::GetTrampoline();
 	_SweepFunction = trmp.write_call<5>(SweepHook.address() + 0xDD, SweepFunction);
@@ -22,12 +55,14 @@ void Loki::NoFollowerAttackCollision::InstallSweepHook() {
 
 void Loki::NoFollowerAttackCollision::InstallArrowHook() {
 	REL::Relocation<std::uintptr_t> arrowHook{ REL::ID(43027) }; //+90
+	// SkyrimSE.exe+782E60 - E8 9BC6ECFF           - call SkyrimSE.exe+64F500
 
 	auto& trmp = SKSE::GetTrampoline();
 	_ArrowFunction = trmp.write_call<5>(arrowHook.address() + 0x90, ArrowFunction);
 
 	logger::info("Arrow hook injected");
 }
+#endif
 
 void Loki::NoFollowerAttackCollision::InstallInputSink() {
 	auto deviceMan = RE::BSInputDeviceManager::GetSingleton();

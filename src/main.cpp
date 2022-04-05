@@ -76,6 +76,21 @@ static void SKSEMessageHandler(SKSE::MessagingInterface::Message* message) {
 
 }
 
+#ifdef SKYRIM_SUPPORT_AE
+extern "C" DLLEXPORT constinit auto SKSEPlugin_Version = []() 
+{
+	SKSE::PluginVersionData v;
+
+	v.PluginVersion(1);
+	v.PluginName("loki_NoFollowerAttackCollision"sv);
+
+	v.UsesAddressLibrary(true);
+	//v.CompatibleVersions({ SKSE::RUNTIME_LATEST });
+
+	return v;
+}();
+#endif
+
 extern "C" DLLEXPORT bool SKSEAPI SKSEPlugin_Load(const SKSE::LoadInterface * a_skse)
 {
     logger::info("NoFollowerAttackCollision loaded");

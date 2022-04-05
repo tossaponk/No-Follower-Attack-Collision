@@ -1,8 +1,8 @@
 #pragma once
+
 #define NOMINMAX
 //_CRT_SECURE_NO_WARNINGS
 #define TRUEHUD_API_COMMONLIB
-#include <Windows.h>
 #include "RE/Skyrim.h"
 #include "SKSE/SKSE.h"
 #include "xbyak/xbyak.h"
@@ -31,6 +31,6 @@ namespace logger = SKSE::log;
 
 namespace stl
 {
-    using nonstd::span;
+    //using nonstd::span;
     using SKSE::stl::report_and_fail;
 }

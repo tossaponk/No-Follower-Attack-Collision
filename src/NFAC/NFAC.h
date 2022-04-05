@@ -1,5 +1,5 @@
 #pragma once
-#include "C:/dev/simpleini-master/SimpleIni.h"
+#include <SimpleIni.h>
 
 namespace Loki {
 

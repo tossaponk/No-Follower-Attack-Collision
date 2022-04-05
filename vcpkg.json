@@ -5,8 +5,11 @@
   "homepage": "https://github.com/Ryan-rsm-McKenzie/ExamplePlugin-CommonLibSSE",
   "license": "MIT",
   "dependencies": [
+    "boost-stl-interfaces",
     "span-lite",
     "spdlog",
-    "xbyak"
+    "xbyak",
+	"rsm-binary-io",
+	"simpleini"
   ]
 }
