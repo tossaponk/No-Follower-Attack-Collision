@@ -1,6 +1,8 @@
 #include "NFAC.h"
 
 static inline bool toggle = true;
+uintptr_t funcCheckValidTargetOriginal = 0;
+uintptr_t funcPCCheckValidTargetOriginal = 0;
 
 #ifdef SKYRIM_SUPPORT_AE
 void Loki::NoFollowerAttackCollision::InstallMeleeHook() {
@@ -32,6 +34,17 @@ void Loki::NoFollowerAttackCollision::InstallArrowHook() {
 
 	logger::info("Arrow hook injected");
 }
+
+void Loki::NoFollowerAttackCollision::InstallVaildTargetHook()
+{
+	REL::Relocation<uintptr_t> vtbl{ REL::ID( RE::VTABLE_Character[0] ) };
+	funcCheckValidTargetOriginal = vtbl.write_vfunc( 0xD6, &Loki::NoFollowerAttackCollision::FollowerCheck );
+
+	// Since the player is instantiated with the game, rewriting vtable will not work on player
+	REL::Relocation<uintptr_t> vtblPC{ REL::ID( RE::VTABLE_PlayerCharacter[0] ) };
+	funcPCCheckValidTargetOriginal = vtblPC.write_vfunc( 0xD6, &Loki::NoFollowerAttackCollision::FollowerCheck );
+}
+
 #else
 void Loki::NoFollowerAttackCollision::InstallMeleeHook() {
 	REL::Relocation<std::uintptr_t> MeleeHook{ REL::ID(37650) }; //+38B
@@ -123,8 +136,47 @@ void Loki::NoFollowerAttackCollision::ArrowFunction(RE::Character* a_aggressor, 
 
 }
 
+bool Loki::NoFollowerAttackCollision::FollowerCheck( RE::Actor* a_this, RE::TESObjectREFR& a_target )
+{
+	bool isValid = true;
+	if( a_target.Is( RE::FormType::ActorCharacter ) && toggle )
+	{
+		auto target = static_cast<RE::Actor*>( &a_target );
+		if( !target->IsHostileToActor( a_this ) )
+		{
+			auto targetOwnerHandle		= target->GetCommandingActor();
+			auto thisOwnerHandle		= a_this->GetCommandingActor();
+			auto targetOwner			= targetOwnerHandle ? targetOwnerHandle.get() : nullptr;
+			auto thisOwner				= thisOwnerHandle ? thisOwnerHandle.get() : nullptr;
 
+			bool isThisPlayer			= a_this->IsPlayerRef();
+			bool isThisTeammate			= a_this->IsPlayerTeammate();
+			bool isThisSummonedByPC		= a_this->IsSummoned() && thisOwner && thisOwner->IsPlayerRef();
+			bool isTargetPlayer			= target->IsPlayerRef();
+			bool isTargetTeammate		= target->IsPlayerTeammate();
+			bool isTargetSummonedByPC	= target->IsSummoned() && targetOwner && targetOwner->IsPlayerRef();
 
+			// Prevent player's team from hitting each other
+			if( (isThisPlayer || isThisTeammate || isThisSummonedByPC) &&
+				(isTargetPlayer || isTargetTeammate || isTargetSummonedByPC ) )
+				isValid = false;
+		}
+	}
+
+	// 41241
+	if( a_this->IsPlayerRef() )
+	{
+		using func_t = decltype(&FollowerCheck);
+		REL::Relocation<func_t> func( funcPCCheckValidTargetOriginal );
+		return isValid && func( a_this, a_target );
+	}
+	else
+	{
+		using func_t = decltype(&FollowerCheck);
+		REL::Relocation<func_t> func( funcCheckValidTargetOriginal );
+		return isValid && func( a_this, a_target );
+	}
+}
 
 
 RE::BSEventNotifyControl Loki::OnInput::ProcessEvent(RE::InputEvent* const* a_event, RE::BSTEventSource<RE::InputEvent*>* a_eventSource) {

@@ -116,6 +116,7 @@ namespace Loki {
         static void InstallMeleeHook();
         static void InstallSweepHook();
         static void InstallArrowHook();
+		static void InstallVaildTargetHook();
 
 		static void InstallInputSink();
 
@@ -127,6 +128,8 @@ namespace Loki {
 		static void MeleeFunction(RE::Character* a_victim, RE::Actor* a_aggressor, std::int64_t a3, char a4, float a5);
 		static void SweepFunction(RE::Character* a_victim, RE::Actor* a_aggressor, std::int64_t a3, char a4, float a5);
 		static void ArrowFunction(RE::Character* a_victim, RE::Actor* a_aggressor, std::int64_t a3, char a4, float a5);
+
+		static bool FollowerCheck(RE::Actor* a_this, RE::TESObjectREFR& a_target);
 
 		static inline REL::Relocation<decltype(MeleeFunction)> _MeleeFunction;
 		static inline REL::Relocation<decltype(SweepFunction)> _SweepFunction;
