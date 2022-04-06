@@ -82,16 +82,7 @@ void Loki::NoFollowerAttackCollision::MeleeFunction(RE::Character* a_aggressor, 
 
 	if (!a_victim || !a_aggressor || !toggle) { return _MeleeFunction(a_aggressor, a_victim, a3, a4, a5); }
 
-	if ((a_aggressor->IsPlayerRef() || a_aggressor->IsPlayerTeammate()) &&
-		a_victim->IsPlayerTeammate() || (a_victim->IsGuard() && !a_victim->IsHostileToActor(a_aggressor))) {
-
-		return;
-	}
-	if (a_victim->IsAMount() && !a_victim->IsHostileToActor(a_aggressor)) {
-		return;
-	}
-
-	if (protectNeutralActor) { if (!a_victim->IsHostileToActor(a_aggressor)) { return; } }
+	if( !FollowerCheck( a_aggressor, *a_victim ) ) return;
 
 	return _MeleeFunction(a_aggressor, a_victim, a3, a4, a5);
 
@@ -101,16 +92,7 @@ void Loki::NoFollowerAttackCollision::SweepFunction(RE::Character* a_aggressor, 
 
 	if (!a_victim || !a_aggressor || !toggle) { return _SweepFunction(a_aggressor, a_victim, a3, a4, a5); }
 
-	if ((a_aggressor->IsPlayerRef() || a_aggressor->IsPlayerTeammate()) &&
-		a_victim->IsPlayerTeammate() || (a_victim->IsGuard() && !a_victim->IsHostileToActor(a_aggressor))) {
-
-		return;
-	}
-	if (a_victim->IsAMount() && !a_victim->IsHostileToActor(a_aggressor)) {
-		return;
-	}
-
-	if (protectNeutralActor) { if (!a_victim->IsHostileToActor(a_aggressor)) { return; } }
+	if( !FollowerCheck( a_aggressor, *a_victim ) ) return;
 
 	return _SweepFunction(a_aggressor, a_victim, a3, a4, a5);
 
@@ -120,16 +102,7 @@ void Loki::NoFollowerAttackCollision::ArrowFunction(RE::Character* a_aggressor, 
 
 	if (!a_victim || !a_aggressor || !toggle) { return _ArrowFunction(a_aggressor, a_victim, a3, a4, a5); }
 
-	if ((a_aggressor->IsPlayerRef() || a_aggressor->IsPlayerTeammate()) &&
-		a_victim->IsPlayerTeammate() || (a_victim->IsGuard() && !a_victim->IsHostileToActor(a_aggressor))) {
-
-		return;
-	}
-	if (a_victim->IsAMount() && !a_victim->IsHostileToActor(a_aggressor)) {
-		return;
-	}
-
-	if (protectNeutralActor) { if (!a_victim->IsHostileToActor(a_aggressor)) { return; } }
+	if( !FollowerCheck( a_aggressor, *a_victim ) ) return;
 
 	return _ArrowFunction(a_aggressor, a_victim, a3, a4, a5);
 
@@ -154,10 +127,16 @@ bool Loki::NoFollowerAttackCollision::FollowerCheck( RE::Actor* a_this, RE::TESO
 			bool isTargetPlayer			= target->IsPlayerRef();
 			bool isTargetTeammate		= target->IsPlayerTeammate();
 			bool isTargetSummonedByPC	= target->IsSummoned() && targetOwner && targetOwner->IsPlayerRef();
+			bool isTargetAGuard			= target->IsGuard();
+			bool isTargetAMount			= target->IsAMount();
 
-			// Prevent player's team from hitting each other
+			// Prevent player's team from hitting each other, a guard or a mount.
 			if( (isThisPlayer || isThisTeammate || isThisSummonedByPC) &&
-				(isTargetPlayer || isTargetTeammate || isTargetSummonedByPC ) )
+				(isTargetPlayer || isTargetTeammate || isTargetSummonedByPC || isTargetAGuard || isTargetAMount) )
+				isValid = false;
+
+			// Protect neutral actor if desired
+			if( protectNeutralActor )
 				isValid = false;
 		}
 	}
