@@ -35,16 +35,6 @@ void Loki::NoFollowerAttackCollision::InstallArrowHook() {
 	logger::info("Arrow hook injected");
 }
 
-void Loki::NoFollowerAttackCollision::InstallVaildTargetHook()
-{
-	REL::Relocation<uintptr_t> vtbl{ REL::ID( RE::VTABLE_Character[0] ) };
-	funcCheckValidTargetOriginal = vtbl.write_vfunc( 0xD6, &Loki::NoFollowerAttackCollision::FollowerCheck );
-
-	// Since the player is instantiated with the game, rewriting vtable will not work on player
-	REL::Relocation<uintptr_t> vtblPC{ REL::ID( RE::VTABLE_PlayerCharacter[0] ) };
-	funcPCCheckValidTargetOriginal = vtblPC.write_vfunc( 0xD6, &Loki::NoFollowerAttackCollision::FollowerCheck );
-}
-
 #else
 void Loki::NoFollowerAttackCollision::InstallMeleeHook() {
 	REL::Relocation<std::uintptr_t> MeleeHook{ REL::ID(37650) }; //+38B
@@ -73,6 +63,15 @@ void Loki::NoFollowerAttackCollision::InstallArrowHook() {
 	logger::info("Arrow hook injected");
 }
 #endif
+
+void Loki::NoFollowerAttackCollision::InstallVaildTargetHook()
+{
+	REL::Relocation<uintptr_t> vtbl{ REL::ID( RE::VTABLE_Character[0] ) };
+	funcCheckValidTargetOriginal = vtbl.write_vfunc( 0xD6, &Loki::NoFollowerAttackCollision::FollowerCheck );
+
+	REL::Relocation<uintptr_t> vtblPC{ REL::ID( RE::VTABLE_PlayerCharacter[0] ) };
+	funcPCCheckValidTargetOriginal = vtblPC.write_vfunc( 0xD6, &Loki::NoFollowerAttackCollision::FollowerCheck );
+}
 
 void Loki::NoFollowerAttackCollision::InstallInputSink() {
 	auto deviceMan = RE::BSInputDeviceManager::GetSingleton();
