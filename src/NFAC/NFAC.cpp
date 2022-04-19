@@ -64,6 +64,15 @@ void Loki::NoFollowerAttackCollision::InstallArrowHook() {
 }
 #endif
 
+void Loki::NoFollowerAttackCollision::InstallVaildTargetHook()
+{
+	REL::Relocation<uintptr_t> vtbl{ REL::ID( RE::VTABLE_Character[0] ) };
+	funcCheckValidTargetOriginal = vtbl.write_vfunc( 0xD6, &Loki::NoFollowerAttackCollision::IsTargetVaild );
+
+	REL::Relocation<uintptr_t> vtblPC{ REL::ID( RE::VTABLE_PlayerCharacter[0] ) };
+	funcPCCheckValidTargetOriginal = vtblPC.write_vfunc( 0xD6, &Loki::NoFollowerAttackCollision::IsTargetVaild );
+}
+
 void Loki::NoFollowerAttackCollision::InstallInputSink() {
 	auto deviceMan = RE::BSInputDeviceManager::GetSingleton();
 	deviceMan->AddEventSink(OnInput::GetSingleton());
@@ -132,7 +141,20 @@ bool Loki::NoFollowerAttackCollision::IsTargetVaild( RE::Actor* a_this, RE::TESO
 		}
 	}
 
-	return isValid;
+	//return isValid;
+	// 41241
+	if( a_this->IsPlayerRef() )
+	{
+		using func_t = decltype(&IsTargetVaild);
+		REL::Relocation<func_t> func( funcPCCheckValidTargetOriginal );
+		return isValid && func( a_this, a_target );
+	}
+	else
+	{
+		using func_t = decltype(&IsTargetVaild);
+		REL::Relocation<func_t> func( funcCheckValidTargetOriginal );
+		return isValid && func( a_this, a_target );
+	}
 }
 
 

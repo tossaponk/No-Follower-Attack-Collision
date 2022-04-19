@@ -116,6 +116,7 @@ namespace Loki {
 		static void InstallMeleeHook();
 		static void InstallSweepHook();
 		static void InstallArrowHook();
+		static void InstallVaildTargetHook();
 
 		struct MagicHitHook
 		{
