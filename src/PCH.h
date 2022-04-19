@@ -33,4 +33,13 @@ namespace stl
 {
     //using nonstd::span;
     using SKSE::stl::report_and_fail;
+
+	template <class T>
+	void write_thunk_call(std::uintptr_t a_src)
+	{
+		auto& trampoline = SKSE::GetTrampoline();
+		SKSE::AllocTrampoline(14);
+
+		T::func = trampoline.write_call<5>(a_src, T::thunk);
+	}
 }

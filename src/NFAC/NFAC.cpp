@@ -64,15 +64,6 @@ void Loki::NoFollowerAttackCollision::InstallArrowHook() {
 }
 #endif
 
-void Loki::NoFollowerAttackCollision::InstallVaildTargetHook()
-{
-	REL::Relocation<uintptr_t> vtbl{ REL::ID( RE::VTABLE_Character[0] ) };
-	funcCheckValidTargetOriginal = vtbl.write_vfunc( 0xD6, &Loki::NoFollowerAttackCollision::FollowerCheck );
-
-	REL::Relocation<uintptr_t> vtblPC{ REL::ID( RE::VTABLE_PlayerCharacter[0] ) };
-	funcPCCheckValidTargetOriginal = vtblPC.write_vfunc( 0xD6, &Loki::NoFollowerAttackCollision::FollowerCheck );
-}
-
 void Loki::NoFollowerAttackCollision::InstallInputSink() {
 	auto deviceMan = RE::BSInputDeviceManager::GetSingleton();
 	deviceMan->AddEventSink(OnInput::GetSingleton());
@@ -82,7 +73,7 @@ void Loki::NoFollowerAttackCollision::MeleeFunction(RE::Character* a_aggressor, 
 
 	if (!a_victim || !a_aggressor || !toggle) { return _MeleeFunction(a_aggressor, a_victim, a3, a4, a5); }
 
-	if( !FollowerCheck( a_aggressor, *a_victim ) ) return;
+	if( !IsTargetVaild( a_aggressor, *a_victim ) ) return;
 
 	return _MeleeFunction(a_aggressor, a_victim, a3, a4, a5);
 
@@ -92,7 +83,7 @@ void Loki::NoFollowerAttackCollision::SweepFunction(RE::Character* a_aggressor, 
 
 	if (!a_victim || !a_aggressor || !toggle) { return _SweepFunction(a_aggressor, a_victim, a3, a4, a5); }
 
-	if( !FollowerCheck( a_aggressor, *a_victim ) ) return;
+	if( !IsTargetVaild( a_aggressor, *a_victim ) ) return;
 
 	return _SweepFunction(a_aggressor, a_victim, a3, a4, a5);
 
@@ -102,13 +93,13 @@ void Loki::NoFollowerAttackCollision::ArrowFunction(RE::Character* a_aggressor, 
 
 	if (!a_victim || !a_aggressor || !toggle) { return _ArrowFunction(a_aggressor, a_victim, a3, a4, a5); }
 
-	if( !FollowerCheck( a_aggressor, *a_victim ) ) return;
+	if( !IsTargetVaild( a_aggressor, *a_victim ) ) return;
 
 	return _ArrowFunction(a_aggressor, a_victim, a3, a4, a5);
 
 }
 
-bool Loki::NoFollowerAttackCollision::FollowerCheck( RE::Actor* a_this, RE::TESObjectREFR& a_target )
+bool Loki::NoFollowerAttackCollision::IsTargetVaild( RE::Actor* a_this, RE::TESObjectREFR& a_target )
 {
 	bool isValid = true;
 	if( a_target.Is( RE::FormType::ActorCharacter ) && toggle )
@@ -141,19 +132,7 @@ bool Loki::NoFollowerAttackCollision::FollowerCheck( RE::Actor* a_this, RE::TESO
 		}
 	}
 
-	// 41241
-	if( a_this->IsPlayerRef() )
-	{
-		using func_t = decltype(&FollowerCheck);
-		REL::Relocation<func_t> func( funcPCCheckValidTargetOriginal );
-		return isValid && func( a_this, a_target );
-	}
-	else
-	{
-		using func_t = decltype(&FollowerCheck);
-		REL::Relocation<func_t> func( funcCheckValidTargetOriginal );
-		return isValid && func( a_this, a_target );
-	}
+	return isValid;
 }
 
 
