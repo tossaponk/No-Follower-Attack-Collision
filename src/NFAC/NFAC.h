@@ -3,36 +3,36 @@
 
 namespace Loki {
 
-    class OnInput :
-        public RE::BSTEventSink<RE::InputEvent*> {
+	class OnInput :
+		public RE::BSTEventSink<RE::InputEvent*> {
 
-    public:
-        static OnInput* GetSingleton() {
-            static OnInput singleton;
-            return &singleton;
-        }
-        virtual RE::BSEventNotifyControl ProcessEvent(RE::InputEvent* const* a_event, RE::BSTEventSource<RE::InputEvent*>* a_eventSource) override;
+	public:
+		static OnInput* GetSingleton() {
+			static OnInput singleton;
+			return &singleton;
+		}
+		virtual RE::BSEventNotifyControl ProcessEvent(RE::InputEvent* const* a_event, RE::BSTEventSource<RE::InputEvent*>* a_eventSource) override;
 
-    protected:
-        OnInput() = default;
-        OnInput(const OnInput&) = delete;
-        OnInput(OnInput&&) = delete;
-        virtual ~OnInput() = default;
+	protected:
+		OnInput() = default;
+		OnInput(const OnInput&) = delete;
+		OnInput(OnInput&&) = delete;
+		virtual ~OnInput() = default;
 
-        auto operator=(const OnInput&)->OnInput & = delete;
-        auto operator=(OnInput&&)->OnInput & = delete;
+		auto operator=(const OnInput&)->OnInput & = delete;
+		auto operator=(OnInput&&)->OnInput & = delete;
 
-    };
+	};
 
-    class NoFollowerAttackCollision {
+	class NoFollowerAttackCollision {
 
-    public:
-        enum Offset : std::uint32_t {
-            kInvalid = static_cast<std::uint32_t>(-1),
-            kKeyboardOffset = 0,
-            kMouseOffset = 256,
-            kGamepadOffset = 266
-        };
+	public:
+		enum Offset : std::uint32_t {
+			kInvalid = static_cast<std::uint32_t>(-1),
+			kKeyboardOffset = 0,
+			kMouseOffset = 256,
+			kGamepadOffset = 266
+		};
 		static std::uint32_t GetGamepadIndex(RE::BSWin32GamepadDevice::Key a_key)
 		{
 			using Key = RE::BSWin32GamepadDevice::Key;
@@ -96,7 +96,7 @@ namespace Loki {
 			return index != kInvalid ? index + kGamepadOffset : kInvalid;
 		}
 
-        NoFollowerAttackCollision() {
+		NoFollowerAttackCollision() {
 			CSimpleIniA ini;
 			ini.SetUnicode();
 			auto filename = L"Data/SKSE/Plugins/loki_NFAC.ini";
@@ -105,17 +105,17 @@ namespace Loki {
 			toggleKey = ini.GetLongValue("SETTINGS", "key", -1);
 			protectNeutralActor = ini.GetBoolValue("SETTINGS", "bProtectNeutralActor", false);
 		}
-        ~NoFollowerAttackCollision() {
+		~NoFollowerAttackCollision() {
 
 		}
-        static NoFollowerAttackCollision* GetSingleton() {
+		static NoFollowerAttackCollision* GetSingleton() {
 			static NoFollowerAttackCollision* singleton = new NoFollowerAttackCollision();
 			return singleton;
 		}
 
-        static void InstallMeleeHook();
-        static void InstallSweepHook();
-        static void InstallArrowHook();
+		static void InstallMeleeHook();
+		static void InstallSweepHook();
+		static void InstallArrowHook();
 
 		struct MagicHitHook
 		{
@@ -145,11 +145,11 @@ namespace Loki {
 
 		static void InstallInputSink();
 
-        static inline std::uint32_t toggleKey;
+		static inline std::uint32_t toggleKey;
 		static inline bool protectNeutralActor;
 
-    private:
-        // RCX = Aggressor, RDX = Victim, R8 = ???, R9 = ???, XMM0 = ???
+	private:
+		// RCX = Aggressor, RDX = Victim, R8 = ???, R9 = ???, XMM0 = ???
 		static void MeleeFunction(RE::Character* a_victim, RE::Actor* a_aggressor, std::int64_t a3, char a4, float a5);
 		static void SweepFunction(RE::Character* a_victim, RE::Actor* a_aggressor, std::int64_t a3, char a4, float a5);
 		static void ArrowFunction(RE::Character* a_victim, RE::Actor* a_aggressor, std::int64_t a3, char a4, float a5);
@@ -160,6 +160,6 @@ namespace Loki {
 		static inline REL::Relocation<decltype(SweepFunction)> _SweepFunction;
 		static inline REL::Relocation<decltype(ArrowFunction)> _ArrowFunction;
 
-    };
+	};
 
 }
