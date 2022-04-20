@@ -118,7 +118,8 @@ namespace Loki {
 		static void InstallArrowHook();
 		static void InstallVaildTargetHook();
 
-		struct MagicHitHook
+		// This hook includes magic projectile from spells and enchanted arrows
+		struct MagicProjectileHitHook
 		{
 			static void thunk( RE::MagicCaster* a_magicCaster, void* a_unk1, RE::Projectile* a_projectile, RE::TESObjectREFR* a_target, float a_unk2, float a_unk3 )
 			{
@@ -136,12 +137,80 @@ namespace Loki {
 			static inline REL::Relocation<decltype(thunk)> func;
 		};
 
+		struct ExplosionHitHook
+		{
+			// This struct is not available in CommonLibSSE
+			struct ExplosionHitData
+			{
+				RE::MagicCaster*	caster;				// 00
+				uint64_t			unk08;				// 08
+				RE::Effect*			applyEffect;		// 10
+				RE::Effect*			mainEffect;			// 18
+				RE::MagicItem*		spell;				// 20
+				uint64_t			unk28;				// 28
+				RE::TESObjectREFR*	target;				// 30
+				float				magnitudeOverride;	// 38
+				uint32_t			unk3C;				// 3C
+				RE::NiPoint3*		location;			// 40
+				float				area;				// 48
+				uint64_t			unk50;				// 50
+				uint32_t			unk58;				// 58
+				bool				unk5C;				// 5C
+				bool				unk5D;				// 5D
+				bool				unk5E;				// 5E
+				bool				unk5F;				// 5F
+			};
+
+			static uint32_t thunk( ExplosionHitData* a_hitData, RE::TESObjectREFR* a_target )
+			{
+				// Cancel all effects if at least one of effect is hostile and target is friendly
+				if( a_hitData->spell->hostileCount > 0 )
+				{
+					auto attacker = a_hitData->caster->GetCaster();
+					if( attacker && a_target &&
+						attacker->Is( RE::FormType::ActorCharacter ) &&
+						a_target->Is( RE::FormType::ActorCharacter ) &&
+						!IsTargetVaild( attacker, *a_target ) )
+						return 1;
+				}
+
+				return func( a_hitData, a_target );
+			}
+			static inline REL::Relocation<decltype(thunk)> func;
+		};
+
+		// Magic hits include both from projectile and explosion
 		static void InstallMagicHitHook()
 		{
+#ifdef SKYRIM_SUPPORT_AE
 			// 44206+0x218
 			// SkyrimSE.exe+0x780F50+0x218
-			REL::Relocation<uintptr_t> hook( REL::ID( 44206 ), 0x218 );
-			stl::write_thunk_call<MagicHitHook>( hook.address() );
+			stl::write_thunk_call<MagicProjectileHitHook>( REL::ID( 44206 ).address() + 0x218 );
+
+			// SkyrimSE.exe+056826A -> 34410+0xB9A
+			stl::write_thunk_call<ExplosionHitHook>( REL::ID( 34410 ).address() + 0xB9A );
+#else
+			// TODO: Find SE offset
+#endif
+		}
+
+		struct MagicApplyHook // For debug only
+		{
+			static uint32_t thunk( RE::MagicTarget* a_this, RE::MagicTarget::CreationData* a_creationData )
+			{
+				REL::Relocation<decltype(thunk)> reloc( REL::ID( 38786 ) );
+				return reloc( a_this, a_creationData );
+			}
+			static inline REL::Relocation<decltype(thunk)> func;
+			static inline size_t size = 1;
+		};
+
+		static void InstallMagicApplyHook()
+		{
+			// 38786+0x0
+			// SkyrimSE.exe+0x659D30+0x0
+			stl::write_vfunc<RE::Character, 4, MagicApplyHook>();
+			stl::write_vfunc<RE::PlayerCharacter, 4, MagicApplyHook>();
 		}
 
 		static void InstallInputSink();

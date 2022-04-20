@@ -64,6 +64,8 @@ void Loki::NoFollowerAttackCollision::InstallArrowHook() {
 }
 #endif
 
+// This hook is used as a fallback if the magic hook somehow failed.
+// It prevents hostile effects from applying but not the pain so the target might retaliate despite taking no harm.
 void Loki::NoFollowerAttackCollision::InstallVaildTargetHook()
 {
 	REL::Relocation<uintptr_t> vtbl{ REL::ID( RE::VTABLE_Character[0] ) };
