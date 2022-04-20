@@ -137,7 +137,7 @@ namespace Loki {
 			static inline REL::Relocation<decltype(thunk)> func;
 		};
 
-		struct ExplosionHitHook
+		struct MagicExplosionHitHook
 		{
 			// This struct is not available in CommonLibSSE
 			struct ExplosionHitData
@@ -179,6 +179,27 @@ namespace Loki {
 			static inline REL::Relocation<decltype(thunk)> func;
 		};
 
+		struct ProjectileExplosionHitHook
+		{
+			static uint64_t thunk( RE::Explosion* a_explosion, RE::TESObjectREFR* a_target, uint32_t a_unk1, uint32_t a_unk2 )
+			{
+				// Cancel explosion hit handler if friendly fire is off
+				auto actorCause = a_explosion->GetActorCause();
+				if( actorCause && actorCause->actor )
+				{
+					auto attacker = actorCause->actor.get();
+					if( attacker && a_target &&
+						attacker->Is( RE::FormType::ActorCharacter ) &&
+						a_target->Is( RE::FormType::ActorCharacter ) &&
+						!IsTargetVaild( attacker.get(), *a_target ) )
+						return 0;
+				}
+
+				return func( a_explosion, a_target, a_unk1, a_unk2 );
+			}
+			static inline REL::Relocation<decltype(thunk)> func;
+		};
+
 		// Magic hits include both from projectile and explosion
 		static void InstallMagicHitHook()
 		{
@@ -188,7 +209,10 @@ namespace Loki {
 			stl::write_thunk_call<MagicProjectileHitHook>( REL::ID( 44206 ).address() + 0x218 );
 
 			// SkyrimSE.exe+056826A -> 34410+0xB9A
-			stl::write_thunk_call<ExplosionHitHook>( REL::ID( 34410 ).address() + 0xB9A );
+			stl::write_thunk_call<MagicExplosionHitHook>( REL::ID( 34410 ).address() + 0xB9A );
+
+			// SkyrimSE.exe+0765B4B -> 43847+0x18B
+			stl::write_thunk_call<ProjectileExplosionHitHook>( REL::ID( 43847 ).address() + 0x18B );
 #else
 			// TODO: Find SE offset
 #endif
