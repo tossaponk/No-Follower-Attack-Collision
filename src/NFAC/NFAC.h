@@ -148,11 +148,12 @@ namespace Loki {
 				RE::Effect*			mainEffect;			// 18
 				RE::MagicItem*		spell;				// 20
 				uint64_t			unk28;				// 28
-				RE::TESObjectREFR*	target;				// 30
+				RE::TESObjectREFR*	aggressor;			// 30
 				float				magnitudeOverride;	// 38
 				uint32_t			unk3C;				// 3C
 				RE::NiPoint3*		location;			// 40
 				float				area;				// 48
+				uint32_t			unk4C;				// 4C
 				uint64_t			unk50;				// 50
 				uint32_t			unk58;				// 58
 				bool				unk5C;				// 5C
@@ -160,6 +161,7 @@ namespace Loki {
 				bool				unk5E;				// 5E
 				bool				unk5F;				// 5F
 			};
+			static_assert(sizeof(ExplosionHitData) == 0x60);
 
 			static uint32_t thunk( ExplosionHitData* a_hitData, RE::TESObjectREFR* a_target )
 			{
