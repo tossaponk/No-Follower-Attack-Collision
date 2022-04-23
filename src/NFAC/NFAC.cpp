@@ -116,7 +116,7 @@ bool Loki::NoFollowerAttackCollision::IsTargetVaild( RE::Actor* a_this, RE::TESO
 	if( a_target.Is( RE::FormType::ActorCharacter ) && toggle )
 	{
 		auto target = static_cast<RE::Actor*>( &a_target );
-		if( !target->IsHostileToActor( a_this ) )
+		if( !target->IsDead() && !target->IsHostileToActor( a_this ) )
 		{
 			auto targetOwnerHandle		= target->GetCommandingActor();
 			auto thisOwnerHandle		= a_this->GetCommandingActor();
