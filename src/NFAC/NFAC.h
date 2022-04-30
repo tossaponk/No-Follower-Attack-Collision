@@ -137,6 +137,27 @@ namespace Loki {
 			static inline REL::Relocation<decltype(thunk)> func;
 		};
 
+		// Magic projectile fire its hit event separately from applying magic effects. This hook is needed to cancel hit event from firing
+		struct MagicProjectileHitEventHook
+		{
+			static void thunk( RE::Projectile* a_projectile, RE::TESObjectREFR* a_target, RE::NiPoint3* a_unk1, RE::NiPoint3* a_unk2, void* a_unk3 )
+			{
+				auto actorCause = a_projectile->GetActorCause();
+				if( actorCause && actorCause->actor )
+				{
+					auto attacker = actorCause->actor.get();
+					if( attacker && a_target &&
+						attacker->Is( RE::FormType::ActorCharacter ) &&
+						a_target->Is( RE::FormType::ActorCharacter ) &&
+						!IsTargetVaild( attacker.get(), *a_target ) )
+						return;
+				}
+
+				func( a_projectile, a_target, a_unk1, a_unk2, a_unk3 );
+			}
+			static inline REL::Relocation<decltype(thunk)> func;
+		};
+
 		struct MagicExplosionHitHook
 		{
 			// This struct is not available in CommonLibSSE
@@ -210,6 +231,9 @@ namespace Loki {
 			// SkyrimSE.exe+0x780F50+0x218
 			stl::write_thunk_call<MagicProjectileHitHook>( REL::ID( 44206 ).address() + 0x218 );
 
+			// SkyrimSE.exe+0780E1A -> 44205+0x18A
+			stl::write_thunk_call<MagicProjectileHitEventHook>( REL::ID( 44205 ).address() + 0x18A );
+
 			// SkyrimSE.exe+056826A -> 34410+0xB9A
 			stl::write_thunk_call<MagicExplosionHitHook>( REL::ID( 34410 ).address() + 0xB9A );
 
@@ -237,6 +261,22 @@ namespace Loki {
 			// SkyrimSE.exe+0x659D30+0x0
 			stl::write_vfunc<RE::Character, 4, MagicApplyHook>();
 			stl::write_vfunc<RE::PlayerCharacter, 4, MagicApplyHook>();
+		}
+
+		// For debugging only
+		struct OnHitEventSink : public RE::BSTEventSink<RE::TESHitEvent>
+		{
+			// Inherited via BSTEventSink
+			virtual RE::BSEventNotifyControl ProcessEvent( const RE::TESHitEvent* a_event, RE::BSTEventSource<RE::TESHitEvent>* a_eventSource ) override
+			{
+				return RE::BSEventNotifyControl::kContinue;
+			}
+		};
+
+		static void InstallOnHitEventSink()
+		{
+			static OnHitEventSink onHitSink;
+			RE::ScriptEventSourceHolder::GetSingleton()->AddEventSink( &onHitSink );
 		}
 
 		static void InstallInputSink();

@@ -68,6 +68,7 @@ static void SKSEMessageHandler(SKSE::MessagingInterface::Message* message) {
 			ptr->InstallVaildTargetHook();
 			ptr->InstallMagicHitHook();
 			//ptr->InstallMagicApplyHook();
+			//ptr->InstallOnHitEventSink();
 			break;
 		}
 		case SKSE::MessagingInterface::kPostPostLoad: {
