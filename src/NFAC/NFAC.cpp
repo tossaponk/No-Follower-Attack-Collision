@@ -140,6 +140,10 @@ bool Loki::NoFollowerAttackCollision::IsTargetVaild( RE::Actor* a_this, RE::TESO
 			// Protect neutral actor if desired
 			if( protectNeutralActor )
 				isValid = false;
+
+			// Override valid status if set to disable outside combat
+			if( !isValid && disableOutsideCombat && !a_this->IsInCombat() )
+				isValid = true;
 		}
 	}
 

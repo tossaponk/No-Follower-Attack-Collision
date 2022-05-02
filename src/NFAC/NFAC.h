@@ -104,6 +104,7 @@ namespace Loki {
 
 			toggleKey = ini.GetLongValue("SETTINGS", "key", -1);
 			protectNeutralActor = ini.GetBoolValue("SETTINGS", "bProtectNeutralActor", false);
+			disableOutsideCombat = ini.GetBoolValue("SETTINGS", "bDisableOutsideCombat", false);
 		}
 		~NoFollowerAttackCollision() {
 
@@ -283,6 +284,7 @@ namespace Loki {
 
 		static inline std::uint32_t toggleKey;
 		static inline bool protectNeutralActor;
+		static inline bool disableOutsideCombat;
 
 	private:
 		// RCX = Aggressor, RDX = Victim, R8 = ???, R9 = ???, XMM0 = ???
