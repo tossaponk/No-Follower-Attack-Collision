@@ -161,6 +161,50 @@ namespace Loki {
 
 		struct MagicExplosionHitHook
 		{
+			// SE version patch
+			struct Patch : public Xbyak::CodeGenerator
+			{
+				Patch( size_t a_retAddr )
+				{
+					Xbyak::Label callLbl;
+					Xbyak::Label retLbl;
+					Xbyak::Label retNullLbl;
+					Xbyak::Label retNoFFLbl;
+
+					test( r15, r15 );
+					je( "NULL" );
+
+					// HitData is at register r12
+					mov( rcx, r12 );
+					mov( rdx, r15 );
+					call( ptr[rip + callLbl] );
+
+					test( al, al );
+					je( "NoFF" );
+
+					jmp( ptr[rip + retLbl] );
+
+					L( "NoFF" );
+					jmp( ptr[rip + retNoFFLbl] );
+
+					L( "NULL" );
+					jmp( ptr[rip + retNullLbl] );
+
+					L( callLbl );
+					dq( (size_t)&thunk );
+
+					L( retLbl );
+					dq( a_retAddr );
+
+					L( retNullLbl );
+					dq( a_retAddr + 0x9 );
+
+					L( retNoFFLbl );
+					dq( a_retAddr + 0x287 );
+
+					ready();
+				}
+			};
 			// This struct is not available in CommonLibSSE
 			struct ExplosionHitData
 			{
@@ -185,6 +229,7 @@ namespace Loki {
 			};
 			static_assert(sizeof(ExplosionHitData) == 0x60);
 
+#ifdef SKYRIM_SUPPORT_AE
 			static uint32_t thunk( ExplosionHitData* a_hitData, RE::TESObjectREFR* a_target )
 			{
 				// Cancel all effects if at least one of effect is hostile and target is friendly
@@ -200,6 +245,23 @@ namespace Loki {
 
 				return func( a_hitData, a_target );
 			}
+#else
+			static bool thunk( ExplosionHitData* a_hitData, RE::TESObjectREFR* a_target )
+			{
+				// Cancel all effects if at least one of effect is hostile and target is friendly
+				if( a_hitData->spell->hostileCount > 0 )
+				{
+					auto attacker = a_hitData->caster->GetCaster();
+					if( attacker && a_target &&
+						attacker->Is( RE::FormType::ActorCharacter ) &&
+						a_target->Is( RE::FormType::ActorCharacter ) &&
+						!IsTargetVaild( attacker, *a_target ) )
+						return false;
+				}
+
+				return true;
+			}
+#endif
 			static inline REL::Relocation<decltype(thunk)> func;
 		};
 
@@ -241,7 +303,22 @@ namespace Loki {
 			// SkyrimSE.exe+0765B4B -> 43847+0x18B
 			stl::write_thunk_call<ProjectileExplosionHitHook>( REL::ID( 43847 ).address() + 0x18B );
 #else
-			// TODO: Find SE offset
+			// SkyrimSE.exe+0x7528E0+0x216 -> 43015+0x216
+			stl::write_thunk_call<MagicProjectileHitHook>( REL::ID( 43015 ).address() + 0x216 );
+
+			// SkyrimSE.exe+0x752620+0x1EA -> 43014+0x1EA
+			stl::write_thunk_call<MagicProjectileHitEventHook>( REL::ID( 43014 ).address() + 0x1EA );
+
+			// SkyrimSE.exe+0x551B80+0x73 -> 33686+0x73
+			auto& trampoline = SKSE::GetTrampoline();
+			REL::Relocation<uintptr_t> hook( REL::ID( 33686 ), 0x73 );
+			MagicExplosionHitHook::Patch patch( hook.address() + 5 );
+			SKSE::AllocTrampoline( 14 + patch.getSize() );
+			uintptr_t code = (uintptr_t)trampoline.allocate( patch );
+			trampoline.write_branch<5>( hook.address(), code );
+
+			// SkyrimSE.exe+0x7391C0+0x189 -> 42675+0x189
+			stl::write_thunk_call<ProjectileExplosionHitHook>( REL::ID( 42675 ).address() + 0x189 );
 #endif
 		}
 
